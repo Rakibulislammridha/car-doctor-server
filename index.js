@@ -12,9 +12,7 @@ app.use(express.json());
 
 console.log(process.env.DB_PASS);
 
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3ztqljx.mongodb.net/?retryWrites=true&w=majority`;
-
-const uri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@ac-iu5stap-shard-00-00.3ztqljx.mongodb.net:27017,ac-iu5stap-shard-00-01.3ztqljx.mongodb.net:27017,ac-iu5stap-shard-00-02.3ztqljx.mongodb.net:27017/?ssl=true&replicaSet=atlas-6ti1ov-shard-0&authSource=admin&retryWrites=true&w=majority`
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3ztqljx.mongodb.net/?retryWrites=true&w=majority`
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -31,6 +29,7 @@ async function run() {
     await client.connect();
 
     const serviceCollection = client.db('carDoctors').collection('services');
+    const bookingCollection = client.db('carDoctors').collection('booking')
 
     app.get('/services', async(req, res)=>{
         const cursor = serviceCollection.find();
@@ -44,11 +43,30 @@ async function run() {
 
         const options = {
             // Include only the `title` and `imdb` fields in the returned document
-            projection: { title: 1, price: 1, service_id: 1 },
+            projection: { title: 1, price: 1, service_id: 1, img: 1 },
           };
 
         const result = await serviceCollection.findOne(query, options);
         res.send(result);
+    })
+
+    // booking
+
+    app.get('/bookings', async(req, res)=>{
+        console.log(req.query.email);
+        let query = {};
+        if(req.query?.email){
+            query = { email: req.query.email }
+        }
+        const result = await bookingCollection.find(query).toArray();
+        res.send(result)
+    })
+
+    app.post('/booking', async(req, res)=>{
+        const booking = req.body;
+        console.log(booking);
+        const result = await bookingCollection.insertOne(booking)
+        res.send(result)
     })
 
     // Send a ping to confirm a successful connection
