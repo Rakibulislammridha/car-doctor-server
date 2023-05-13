@@ -12,7 +12,9 @@ app.use(express.json());
 
 console.log(process.env.DB_PASS);
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3ztqljx.mongodb.net/?retryWrites=true&w=majority`
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3ztqljx.mongodb.net/?retryWrites=true&w=majority`
+
+const uri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@ac-iu5stap-shard-00-00.3ztqljx.mongodb.net:27017,ac-iu5stap-shard-00-01.3ztqljx.mongodb.net:27017,ac-iu5stap-shard-00-02.3ztqljx.mongodb.net:27017/?ssl=true&replicaSet=atlas-6ti1ov-shard-0&authSource=admin&retryWrites=true&w=majority`
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -66,6 +68,29 @@ async function run() {
         const booking = req.body;
         console.log(booking);
         const result = await bookingCollection.insertOne(booking)
+        res.send(result)
+    })
+
+    app.patch('/bookings/:id', async(req, res)=>{
+        const id = req.params.id;
+        const filter = {_id: new ObjectId(id)}
+        const updatedBooking = req.body;
+        console.log(updatedBooking);
+        const updatedDoc = {
+            $set: {
+              status: updatedBooking.status
+            },
+          };
+
+          const result = await bookingCollection.updateOne(filter, updatedDoc)
+          res.send(result)
+
+    })
+
+    app.delete('/bookings/:id', async (req, res)=> {
+        const id = req.params.id;
+        const query = {_id: new ObjectId(id)}
+        const result = await bookingCollection.deleteOne(query)
         res.send(result)
     })
 
